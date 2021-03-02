@@ -1,0 +1,34 @@
+﻿
+class Rectangle 
+    #length, #width: i32
+    def Rectangle
+        //optional, fields can be defined in constructor's initialization.
+        #length = 0
+        #width = 0
+    end
+    
+    //all methods are public. Use @ in front of method to make it private 
+    def acceptDetails
+        #length = 4
+        #width = 3
+    end
+
+    def getArea() Double 
+        length * width
+    end
+    def display
+        console.log(`Length: ${length}`)
+        console.log(`Width: {width}`)
+        console.log(`Area: {GetArea()}`)
+    end
+end
+
+def AcceptDetailsAdvanced(this Rectangle) 
+    #length = 7
+    #width = 3
+end
+
+r = Rectangle()
+r.AcceptDetails()
+r.Display()
+Console.ReadLine()
