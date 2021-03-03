@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Strukt.Lex
 {
@@ -13,13 +14,9 @@ namespace Strukt.Lex
             for (var start = 0; start < text.Length;)
             {
                 (TokenKind kind, int matchLen)? match = ScannerUtils.Match(text, start, matchers);
-
                 ReportError(match, text, start);
-
-
                 start += AddToken(text, match, start, result);
             }
-
             return result.ToArray();
         }
 
@@ -50,6 +47,12 @@ namespace Strukt.Lex
             }
 
             throw new InvalidDataException($"Invalid start text: '{startError}'");
+        }
+
+        private TokenKind[] _spaceTokenKinds = new[] {TokenKind.Comment, TokenKind.Space};
+        public Token[] Simplify(Token[] tokens)
+        {
+            return tokens.Where(t => !_spaceTokenKinds.Contains(t.Kind)).ToArray();
         }
     }
 }

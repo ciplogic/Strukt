@@ -6,11 +6,6 @@ namespace Strukt.Lex
 {
     public static class LexMatchers
     {
-        static int LengthMatch(string text, int start, Func<char, bool> firstCharMatch, Func<char, bool> nextChars)
-        {
-            var span = text.AsSpan(start);
-            return LengthMatchSpan(span, firstCharMatch, nextChars);
-        }
         static int LengthMatchSpan(ReadOnlySpan<char> text, Func<char, bool> firstCharMatch, Func<char, bool> nextChars)
         {
             if (!firstCharMatch(text[0]))
@@ -32,13 +27,16 @@ namespace Strukt.Lex
             return LengthMatchSpan(span, allChars, allChars);
         }
 
+        private static char[] EolnChars = {'\n', '\r'};
         public static int Eoln(string text, int start)
         {
-            return LengthMatchAll(text, start, ch => ch == '\n' || ch == '\r');
+            return LengthMatchAll(text, start, ch => EolnChars.Contains(ch));
         }
+        
+        private static char[] SpaceChars = {' ', '\t'};
         public static int Spaces(string text, int start)
         {
-            return LengthMatchAll(text,  start, char.IsWhiteSpace);
+            return LengthMatchAll(text,  start, ch => SpaceChars.Contains(ch));
         }
 
         public static int IdentifierSpan(ReadOnlySpan<char> text)

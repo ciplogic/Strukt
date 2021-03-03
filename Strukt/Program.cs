@@ -10,8 +10,10 @@ namespace Strukt
         {
             var scanner = new Scanner();
             var content = File.ReadAllText("main.stk");
-            var tokens = scanner.Lex(content);
-            Console.WriteLine("Token count: " + tokens.Length);
+            Token[] tokens = scanner.Lex(content);
+            Token[] simplified = scanner.Simplify(tokens);
+            
+            Console.WriteLine("Token count: " + simplified.Length);
         }
     }
 }
