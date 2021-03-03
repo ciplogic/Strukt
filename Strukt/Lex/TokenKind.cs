@@ -10,6 +10,7 @@
         Eoln,
         Operator,
         FieldIdentifier,
-        Comment
+        Comment,
+        None
     }
 }

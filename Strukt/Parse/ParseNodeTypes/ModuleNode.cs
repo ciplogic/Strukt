@@ -1,6 +1,6 @@
 ﻿namespace Strukt.Parse.ParseNodeTypes
 {
-    public class ModuleNode : AstNode
+    public class ModuleNode : BodyNodes
     {
         public ModuleNode() : base(AstNodeKind.Module)
         {
