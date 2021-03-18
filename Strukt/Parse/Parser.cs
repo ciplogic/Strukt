@@ -45,7 +45,34 @@ namespace Strukt.Parse
             cursor.Advance();
             result.Name = cursor.Current.Text;
             cursor.Advance();
+            ParseClassBody(cursor, result);
             return result;
+        }
+
+        private void ParseClassBody(ParseCursor cursor, ClassNode result)
+        {
+            while (true)
+            {
+                var currNode = cursor.Current;
+                switch (currNode.Kind)
+                {
+                    case TokenKind.Reserved:
+                        if (currNode.Text == "end")
+                        {
+                            return;
+                        }
+
+                        break;
+                    case TokenKind.Eoln:
+                        cursor.Advance();
+                        break;
+                    default:
+                        
+                        break;
+                }
+            }
+            
+            
         }
     }
 }

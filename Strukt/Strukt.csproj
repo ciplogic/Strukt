@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="main.stk">
+      <None Update="main.go">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
