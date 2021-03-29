@@ -5,5 +5,7 @@
         public ModuleNode() : base(AstNodeKind.Module)
         {
         }
+
+        public string Name { get; set; }
     }
 }

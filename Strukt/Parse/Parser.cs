@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.IO;
 using Strukt.Lex;
 using Strukt.Parse.ParseNodeTypes;
 
@@ -11,19 +12,20 @@ namespace Strukt.Parse
             ParseCursor _cursor = new ParseCursor(tokens);
 
             var result = new ModuleNode();
-            while (_cursor.Advance())
+            do
             {
-             
+
                 switch (_cursor.Current.Kind)
                 {
                     case TokenKind.Reserved:
                         ParseGlobalScope(_cursor, result);
-                        break;
+                        continue;
                     default:
                         throw new DataException("Unexpected token: " + _cursor.Current);
-                }   
-            }
+                }
 
+                _cursor.Advance();
+            } while (true);
             return result;
         }
 
@@ -32,47 +34,29 @@ namespace Strukt.Parse
             var currToken = cursor.Current;
             switch (currToken.Text)
             {
-                case "class":
-                    ClassNode classModule = ParseClassDeclaration(cursor);
-                    result.Children.Add(classModule);
+                case "package":
+                    SetPackageName(cursor, result);
                     break;
+                case "func":
+                    SetFunctionDeclaration(cursor, result);
+                    break;
+                default:
+                    throw new InvalidDataException("Unexpected reserved word: " + currToken);
             }
         }
 
-        private ClassNode ParseClassDeclaration(ParseCursor cursor)
+        private void SetFunctionDeclaration(ParseCursor cursor, ModuleNode result)
         {
-            var result = new ClassNode();
-            cursor.Advance();
-            result.Name = cursor.Current.Text;
-            cursor.Advance();
-            ParseClassBody(cursor, result);
-            return result;
+            var functionDeclaration = new FunctionDeclaration(cursor.ReadRow());
+
+            throw new System.NotImplementedException();
         }
 
-        private void ParseClassBody(ParseCursor cursor, ClassNode result)
+        private void SetPackageName(ParseCursor cursor, ModuleNode result)
         {
-            while (true)
-            {
-                var currNode = cursor.Current;
-                switch (currNode.Kind)
-                {
-                    case TokenKind.Reserved:
-                        if (currNode.Text == "end")
-                        {
-                            return;
-                        }
-
-                        break;
-                    case TokenKind.Eoln:
-                        cursor.Advance();
-                        break;
-                    default:
-                        
-                        break;
-                }
-            }
-            
-            
+            cursor.Advance();
+            result.Name = cursor.AdvanceToken().Text;
+            cursor.Advance(TokenKind.Eoln);
         }
     }
 }

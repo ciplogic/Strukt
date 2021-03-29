@@ -10,7 +10,7 @@ namespace Strukt
         static void Main(string[] args)
         {
             var scanner = new Scanner();
-            var content = File.ReadAllText("main.stk");
+            var content = File.ReadAllText("main.go");
             Token[] tokens = scanner.Lex(content);
             Token[] simplified = scanner.Simplify(tokens);
             var parser = new Parser();

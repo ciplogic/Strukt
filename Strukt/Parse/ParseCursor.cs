@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using Strukt.Lex;
 
 namespace Strukt.Parse
@@ -16,6 +19,17 @@ namespace Strukt.Parse
             _tokens = tokens;
         }
 
+        public IEnumerable<string> Remaining
+        {
+            get
+            {
+                for (var i = Pos; i < _tokens.Length; i++)
+                {
+                    yield return _tokens[i].Text;
+                }
+            }
+        }
+
         public bool Advance(TokenKind expected = TokenKind.None)
         {
             if (expected != TokenKind.None)
@@ -28,5 +42,35 @@ namespace Strukt.Parse
             Pos++;
             return Pos < _tokens.Length;
         }
+
+        public Token AdvanceToken()
+        {
+            Advance();
+            return Current;
+        }
+
+        public ParseCursor TokensUntil(TokenKind terminatingToken)
+        {
+            var result = new List<Token>();
+            do
+            {
+                if (Pos >= _tokens.Length || Current.Kind == terminatingToken)
+                {
+                    Advance();
+                    var resultTokens = result.ToArray();
+                    return new ParseCursor(resultTokens);
+                }
+                result.Add(AdvanceToken());
+            } while (true);
+        }
+
+        public bool Advance(string expected)
+        {
+            Debug.Assert(expected == Current.Text);
+            return Advance();
+        }
+
+        public ParseCursor ReadRow() 
+            => TokensUntil(TokenKind.Eoln);
     }
 }
