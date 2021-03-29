@@ -9,14 +9,24 @@ namespace Strukt
     {
         static void Main(string[] args)
         {
+            var files = Directory.GetFiles(
+                @"C:\Oss\v-master\", "*.v", SearchOption.AllDirectories);
             var scanner = new Scanner();
-            var content = File.ReadAllText("main.go");
-            Token[] tokens = scanner.Lex(content);
-            Token[] simplified = scanner.Simplify(tokens);
-            var parser = new Parser();
-            var module = parser.ParseModule(simplified);
-            
-            Console.WriteLine("Token count: " + simplified.Length);
+            foreach (var fileName in files)
+            {
+                try
+                {
+                    var content = File.ReadAllText(fileName);
+                    Token[] tokens = scanner.Lex(content);
+                    Token[] simplified = scanner.Simplify(tokens);
+                    
+                    Console.WriteLine("Success: " + fileName);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Fail on:" + fileName+ "\n"+e.Message);
+                 
+                }}
         }
     }
 }

@@ -43,7 +43,9 @@ namespace Strukt.Lex
 
         public static int IdentifierSpan(ReadOnlySpan<char> text)
         {
-            return LengthMatchSpan(text, char.IsLetter, char.IsLetterOrDigit);
+            return LengthMatchSpan(text, 
+                c => char.IsLetter(c) || c=='_', 
+                c=>char.IsLetterOrDigit(c) || c == '_');
         }
 
         public static int Identifier(string text, int start)
@@ -98,7 +100,7 @@ namespace Strukt.Lex
             "else",
             "falltrough",
             "for",
-            "func",
+            "fn",
             "go",
             "goto",
             "if",
@@ -121,6 +123,14 @@ namespace Strukt.Lex
             return matchReserved == idLen ? matchReserved : 0;
         }
 
+        static int MacroDefine(string text, int start)
+        {
+            if (text[start] != '$')
+                return 0;
+            var slice = text.AsSpan().Slice(start + 1);
+            return IdentifierSpan(slice) + 1;
+        }
+
         private static readonly char[][] Operators = new[]
         {
             "+", "&", " +=", "&=", " &&", "==", "!=", "(", ")",
@@ -128,7 +138,10 @@ namespace Strukt.Lex
             "*", "^", " *=", "^=", " <-", ">", " >=", "{", "}",
             "/", "<<", "/=", "<<=", "++", "=", ":=", ",", ";",
             "%", ">>", "%=", ">>=", "--", "!", "...", ":",
-            "&^", "&^=",
+            "..", ".", "~",
+            "&^", "&^=", 
+            "?",
+            "@",
         }.OrderBy(op=>op.Length).ToArray().StringsToArray();
 
         static int OperatorMatch(string text, int start)
@@ -162,6 +175,7 @@ namespace Strukt.Lex
                 (TokenKind.Comment, LineComment),
                 (TokenKind.FieldIdentifier, FieldIdentifier),
                 (TokenKind.Reserved, ReservedMatch),
+                (TokenKind.Macro, MacroDefine),
                 (TokenKind.Identifier, Identifier),
                 (TokenKind.Operator, OperatorMatch),
                 (TokenKind.Quote, QuoteMatch),

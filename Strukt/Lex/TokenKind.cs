@@ -11,6 +11,7 @@
         Operator,
         FieldIdentifier,
         Comment,
-        None
+        None,
+        Macro
     }
 }
