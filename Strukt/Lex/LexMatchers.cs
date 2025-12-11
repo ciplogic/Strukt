@@ -4,9 +4,10 @@ using System.Linq;
 
 namespace Strukt.Lex
 {
-    public static class LexMatchers
+    static class LexerExtensions
     {
-        static int LengthMatchSpan(ReadOnlySpan<char> text, Func<char, bool> firstCharMatch, Func<char, bool> nextChars)
+        
+        public static int LengthMatchSpan(ReadOnlySpan<char> text, Func<char, bool> firstCharMatch, Func<char, bool> nextChars)
         {
             if (!firstCharMatch(text[0]))
                 return 0;
@@ -21,47 +22,50 @@ namespace Strukt.Lex
             return text.Length;
         }
 
-        static int LengthMatchAll(string text, int start, Func<char, bool> allChars)
+        internal static int LengthMatchAll(ArraySegment<char> text, Func<char, bool> allChars)
         {
-            var span = text.AsSpan(start);
+            var span = text.AsSpan();
             return LengthMatchSpan(span, allChars, allChars);
         }
+    }
+    public static class LexMatchers
+    {
 
         private static char[] EolnChars = {'\n', '\r'};
 
-        public static int Eoln(string text, int start)
+        public static int Eoln(ArraySegment<char> text)
         {
-            return LengthMatchAll(text, start, ch => EolnChars.Contains(ch));
+            return LexerExtensions.LengthMatchAll(text, ch => EolnChars.Contains(ch));
         }
 
         private static char[] SpaceChars = {' ', '\t'};
 
-        public static int Spaces(string text, int start)
+        public static int Spaces(ArraySegment<char> text)
         {
-            return LengthMatchAll(text, start, ch => SpaceChars.Contains(ch));
+            return LexerExtensions.LengthMatchAll(text, ch => SpaceChars.Contains(ch));
         }
 
         public static int IdentifierSpan(ReadOnlySpan<char> text)
         {
-            return LengthMatchSpan(text, 
+            return LexerExtensions.LengthMatchSpan(text, 
                 c => char.IsLetter(c) || c=='_', 
                 c=>char.IsLetterOrDigit(c) || c == '_');
         }
 
-        public static int Identifier(string text, int start)
+        public static int Identifier(ArraySegment<char> text)
         {
-            var span = text.AsSpan(start);
+            var span = text.AsSpan();
             return IdentifierSpan(span);
         }
 
-        public static int Number(string text, int start)
+        public static int Number(ArraySegment<char> text)
         {
-            return LengthMatchAll(text, start, char.IsDigit);
+            return LexerExtensions.LengthMatchAll(text, char.IsDigit);
         }
 
-        public static int FieldIdentifier(string text, int start)
+        public static int FieldIdentifier(ArraySegment<char> text)
         {
-            var span = text.AsSpan(start);
+            var span = text.AsSpan();
             if (span[0] != '#')
                 return 0;
             if (!char.IsLetter(span[1]))
@@ -69,9 +73,9 @@ namespace Strukt.Lex
             return 1 + IdentifierSpan(span.Slice(1));
         }
 
-        public static int LineComment(string text, int start)
+        public static int LineComment(ArraySegment<char> text)
         {
-            var span = text.AsSpan(start);
+            var span = text.AsSpan();
             if (span[0] != '/' || span[1] != '/')
             {
                 return 0;
@@ -90,44 +94,25 @@ namespace Strukt.Lex
 
         private static readonly char[][] ReservedWords = new[]
         {
-            "break",
-            "case",
-            "chan",
-            "const",
-            "continue",
-            "default",
-            "defer",
-            "else",
-            "falltrough",
-            "for",
-            "fn",
-            "go",
-            "goto",
-            "if",
-            "import",
-            "package",
-            "range",
-            "return",
-            "struct",
-            "switch",
-            "type",
+            "private",
+            "static",
             "var"
         }.StringsToArray();
 
-        static int ReservedMatch(string text, int start)
+        static int ReservedMatch(ArraySegment<char> text)
         {
-            int idLen = Identifier(text, start);
+            int idLen = Identifier(text);
             if (idLen == 0)
                 return 0;
-            int matchReserved = ScannerUtils.MatchAny(text, start, ReservedWords);
+            int matchReserved = ScannerUtils.MatchAny(text, ReservedWords);
             return matchReserved == idLen ? matchReserved : 0;
         }
 
-        static int MacroDefine(string text, int start)
+        static int MacroDefine(ArraySegment<char> text)
         {
-            if (text[start] != '$')
+            if (text[0] != '$')
                 return 0;
-            var slice = text.AsSpan().Slice(start + 1);
+            var slice = text.AsSpan().Slice(1);
             return IdentifierSpan(slice) + 1;
         }
 
@@ -144,16 +129,16 @@ namespace Strukt.Lex
             "@",
         }.OrderBy(op=>op.Length).ToArray().StringsToArray();
 
-        static int OperatorMatch(string text, int start)
+        static int OperatorMatch(ArraySegment<char> text)
         {
-            return ScannerUtils.MatchAny(text, start, Operators);
+            return ScannerUtils.MatchAny(text, Operators);
         }
 
         private static readonly char[] QuoteChars = {'\'', '"', '`'};
 
-        static int QuoteMatch(string text, int start)
+        static int QuoteMatch(ArraySegment<char> text)
         {
-            var span = text.AsSpan(start);
+            var span = text.AsSpan();
             var firstChar = span[0];
             if (!QuoteChars.Contains(firstChar))
                 return 0;
@@ -166,9 +151,9 @@ namespace Strukt.Lex
             return -1;
         }
 
-        public static (TokenKind kind, Func<string, int, int>)[] Matchers()
+        public static (TokenKind kind, Func<ArraySegment<char>, int>)[] Matchers()
         {
-            var allMatchers = new List<(TokenKind kind, Func<string, int, int>)>
+            var allMatchers = new List<(TokenKind kind, Func<ArraySegment<char>, int>)>
             {
                 (TokenKind.Eoln, Eoln),
                 (TokenKind.Space, Spaces),

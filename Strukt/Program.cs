@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using Strukt.Lex;
-using Strukt.Parse;
 
 namespace Strukt
 {
@@ -10,16 +9,16 @@ namespace Strukt
         static void Main(string[] args)
         {
             var files = Directory.GetFiles(
-                @"C:\Oss\v-master\", "*.v", SearchOption.AllDirectories);
+                @"C:\codehub\Strukt\Strukt\", "*.cs", SearchOption.AllDirectories);
             var scanner = new Scanner();
             foreach (var fileName in files)
             {
                 try
                 {
                     var content = File.ReadAllText(fileName);
-                    Token[] tokens = scanner.Lex(content);
-                    Token[] simplified = scanner.Simplify(tokens);
-                    
+                    var contentChars = content.ToCharArray() ;
+                    scanner.Code = contentChars;
+                    Token firstToken = scanner.Advance();
                     Console.WriteLine("Success: " + fileName);
                 }
                 catch (Exception e)

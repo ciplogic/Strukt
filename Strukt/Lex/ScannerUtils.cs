@@ -6,12 +6,12 @@ namespace Strukt.Lex
 {
     public static class ScannerUtils
     {
-        public static (TokenKind kind, int matchLen)? Match(string text, int start,
-            (TokenKind kind, Func<string, int, int>)[] matchers)
+        public static (TokenKind kind, int matchLen)? Match(ArraySegment<char> text,
+            (TokenKind kind, Func<ArraySegment<char>, int>)[] matchers)
         {
-            foreach ((TokenKind kind, Func<string,int,int> match) matcher in matchers)
+            foreach ((TokenKind kind, Func<ArraySegment<char>,int> match) matcher in matchers)
             {
-                var matchLen = matcher.match(text, start);
+                var matchLen = matcher.match(text);
                 if (matchLen == 0)
                 {
                     continue;
@@ -30,9 +30,9 @@ namespace Strukt.Lex
             return result.ToArray();
         }
         
-        public static int MatchAnyIndex(string text, int start, char[][] items)
+        public static int MatchAnyIndex(ArraySegment<char> text, char[][] items)
         {
-            ReadOnlySpan<char> span = text.AsSpan(start);
+            ReadOnlySpan<char> span = text.AsSpan();
             for (int index = 0; index < items.Length; index++)
             {
                 char[] item = items[index];
@@ -41,29 +41,17 @@ namespace Strukt.Lex
                     continue;
                 if (span.Length < item.Length)
                     continue;
-                var found = false;
-                for (var i = 1; i < item.Length; i++)
+                if (span.StartsWith(item))
                 {
-                    var currChar = item[i];
-                    if (currChar != span[i])
-                    {
-                        found = true; 
-                        break;
-                    }
+                    return item.Length;
                 }
-
-                if (found)
-                {
-                    continue;
-                }
-                return index;
             }
             return -1;
         }
         
-        public static int MatchAny(string text, int start, char[][] items)
+        public static int MatchAny(ArraySegment<char> text, char[][] items)
         {
-            var indexMatch = MatchAnyIndex(text, start, items);
+            var indexMatch = MatchAnyIndex(text, items);
             return indexMatch == -1 
                 ? 0 
                 : items[indexMatch].Length;

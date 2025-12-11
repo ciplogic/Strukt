@@ -12,6 +12,7 @@
         FieldIdentifier,
         Comment,
         None,
-        Macro
+        Macro,
+        Eof
     }
 }

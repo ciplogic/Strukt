@@ -7,49 +7,68 @@ namespace Strukt.Lex
 {
     public class Scanner
     {
-        public Token[] Lex(string text)
+        public ArraySegment<char> Code { get; set; } = [];
+
+        public Token Peek()
         {
-            var result = new List<Token>();
-            (TokenKind kind, Func<string, int, int>)[] matchers = LexMatchers.Matchers();
-            for (var start = 0; start < text.Length;)
+            if (Code.Count == 0)
+                return new Token()
+                {
+                    Kind = TokenKind.Eof,
+                    Text = ""
+                };
+            (TokenKind kind, Func<ArraySegment<char>, int>)[] matchers = LexMatchers.Matchers();
+            (TokenKind kind, int matchLen)? match = null;
+            foreach ((TokenKind kind, Func<ArraySegment<char>, int>) matcher in matchers)
             {
-                (TokenKind kind, int matchLen)? match = ScannerUtils.Match(text, start, matchers);
-                ReportError(match, text, start);
-                start += AddToken(text, match, start, result);
+                match = ScannerUtils.Match(Code, matchers);
+                if (match != null) break;
             }
-            return result.ToArray();
-        }
 
-        private static int AddToken(string text, (TokenKind kind, int matchLen)? match, int start, List<Token> result)
-        {
-            var matchValue = match.Value;
-            var tokenText = text.Substring(start, matchValue.matchLen);
-            var token = new Token
+            if (!match.HasValue)
             {
-                Kind = matchValue.kind,
-                Text = tokenText
-            };
-            result.Add(token);
-            return matchValue.matchLen;
+                ReportError(null, Code);
+            }
+
+            return BuildToken(Code, match!.Value);
         }
 
-        private static void ReportError((TokenKind kind, int matchLen)? match, string text, int start)
+        public Token Advance()
+        {
+            var token = Peek();
+            Code = Code.Slice(token.Text.Length);
+            return token;
+        }
+
+        private static Token BuildToken(ArraySegment<char> code, (TokenKind kind, int matchLen) match)
+        {
+            var spanToken = code.AsSpan().Slice(0, match.matchLen);
+            return new Token
+            {
+                Kind = match.kind,
+                Text = spanToken.ToString()
+            };
+        }
+
+        private static void ReportError((TokenKind kind, int matchLen)? match, ArraySegment<char> text)
         {
             if (match != null)
             {
                 return;
             }
 
-            var startError = text.Substring(start);
+            var startError = text.AsSpan();
             if (startError.Length > 100)
             {
-                startError = startError.Substring(0, 100);
+                startError = startError.Slice(0, 100);
             }
 
-            throw new InvalidDataException($"Invalid start text: '{startError}'");
+            var errorText = startError.ToString();
+            throw new InvalidDataException($"Invalid start text: '{errorText}'");
         }
 
-        private TokenKind[] _spaceTokenKinds = new[] {TokenKind.Comment, TokenKind.Space};
+        private readonly TokenKind[] _spaceTokenKinds = new[] { TokenKind.Comment, TokenKind.Space };
+
         public Token[] Simplify(Token[] tokens)
         {
             return tokens.Where(t => !_spaceTokenKinds.Contains(t.Kind)).ToArray();
