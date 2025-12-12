@@ -10,7 +10,7 @@ class Program
     static void Main(string[] args)
     {
         string[] files = Directory.GetFiles(
-            @"C:\codehub\Strukt\Strukt\", "*.cs", SearchOption.AllDirectories);
+            @"C:\oss\Strukt\Strukt\", "*.cs", SearchOption.AllDirectories);
         Scanner scanner = new Scanner();
         foreach (string fileName in files)
         {

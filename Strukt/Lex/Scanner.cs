@@ -17,19 +17,19 @@ public class Scanner
                 Text = ""
             };
         (TokenKind kind, Func<ArraySegment<char>, int>)[] matchers = LexMatchers.Matchers();
-        (TokenKind kind, int matchLen)? match = null;
+        MatchWithLength match = null;
         foreach ((TokenKind kind, Func<ArraySegment<char>, int>) matcher in matchers)
         {
             match = ScannerUtils.Match(Code, matchers);
             if (match != null) break;
         }
 
-        if (!match.HasValue)
+        if (match is null)
         {
             ReportError(null, Code);
         }
 
-        return BuildToken(Code, match!.Value);
+        return BuildToken(Code, match);
     }
 
     public Token CurrentToken
@@ -57,7 +57,7 @@ public class Scanner
 
     public bool IsSpacesToken(Token token) => SpaceTokenKinds.Contains(token.Kind);
 
-    private static Token BuildToken(ArraySegment<char> code, (TokenKind kind, int matchLen) match)
+    private static Token BuildToken(ArraySegment<char> code, MatchWithLength match)
     {
         Span<char> spanToken = code.AsSpan().Slice(0, match.matchLen);
         return new Token
@@ -99,14 +99,26 @@ public class Scanner
             {
                 continue;
             }
-
-            resultList.Add(token);
             if (token.Text == tokenText)
             {
                 break;
             }
+
+            resultList.Add(token);
         } while (true);
 
         return resultList.ToArray();
+    }
+
+    public override string ToString()
+    {
+        int indexEoln = Code.IndexOf('\r');
+        if (indexEoln < 0)
+        {
+            return new string(Code.ToArray());
+        }
+
+        var currentLine = Code.Slice(0, indexEoln).ToArray();
+        return new string(currentLine);
     }
 }

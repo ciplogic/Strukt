@@ -4,9 +4,11 @@ using System.Linq;
 
 namespace Strukt.Lex;
 
+record MatchWithLength(TokenKind kind, int matchLen);
+
 public static class ScannerUtils
 {
-    public static (TokenKind kind, int matchLen)? Match(ArraySegment<char> text,
+    internal static MatchWithLength? Match(ArraySegment<char> text,
         (TokenKind kind, Func<ArraySegment<char>, int>)[] matchers)
     {
         foreach ((TokenKind kind, Func<ArraySegment<char>, int> match) matcher in matchers)
@@ -17,7 +19,7 @@ public static class ScannerUtils
                 continue;
             }
 
-            return (matcher.kind, matchLen);
+            return new MatchWithLength(matcher.kind, matchLen);
         }
 
         return null;
