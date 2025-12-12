@@ -1,31 +1,27 @@
 ﻿using System;
 using System.IO;
 using Strukt.Lex;
+using Strukt.Parse;
 
-namespace Strukt
+namespace Strukt;
+
+class Program
 {
-    class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
+        string[] files = Directory.GetFiles(
+            @"C:\codehub\Strukt\Strukt\", "*.cs", SearchOption.AllDirectories);
+        Scanner scanner = new Scanner();
+        foreach (string fileName in files)
         {
-            var files = Directory.GetFiles(
-                @"C:\codehub\Strukt\Strukt\", "*.cs", SearchOption.AllDirectories);
-            var scanner = new Scanner();
-            foreach (var fileName in files)
-            {
-                try
-                {
-                    var content = File.ReadAllText(fileName);
-                    var contentChars = content.ToCharArray() ;
-                    scanner.Code = contentChars;
-                    Token firstToken = scanner.Advance();
-                    Console.WriteLine("Success: " + fileName);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Fail on:" + fileName+ "\n"+e.Message);
-                 
-                }}
+            string content = File.ReadAllText(fileName);
+            char[] contentChars = content.ToCharArray();
+            scanner.Code = contentChars;
+            CsMiniParser csMiniParser = new CsMiniParser();
+            CompilationUnit compilationUnit = csMiniParser.Parse(scanner);
+
+
+            Console.WriteLine("Success: " + fileName);
         }
     }
 }

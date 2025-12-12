@@ -1,18 +1,17 @@
-﻿namespace Strukt.Lex
+﻿namespace Strukt.Lex;
+
+public enum TokenKind
 {
-    public enum TokenKind
-    {
-        Space,
-        Quote,
-        Reserved,
-        Identifier,
-        Number,
-        Eoln,
-        Operator,
-        FieldIdentifier,
-        Comment,
-        None,
-        Macro,
-        Eof
-    }
+    Space,
+    Quote,
+    Reserved,
+    Identifier,
+    Number,
+    Eoln,
+    Operator,
+    FieldIdentifier,
+    Comment,
+    None,
+    Macro,
+    Eof
 }

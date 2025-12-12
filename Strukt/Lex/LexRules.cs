@@ -1,7 +1,6 @@
-namespace Strukt.Lex
+namespace Strukt.Lex;
+
+public class LexRules
 {
-    public class LexRules
-    {
         
-    }
 }

@@ -1,77 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
-namespace Strukt.Lex
+namespace Strukt.Lex;
+
+public class Scanner
 {
-    public class Scanner
+    public ArraySegment<char> Code { get; set; } = [];
+
+    public Token Peek()
     {
-        public ArraySegment<char> Code { get; set; } = [];
-
-        public Token Peek()
+        if (Code.Count == 0)
+            return new Token()
+            {
+                Kind = TokenKind.Eof,
+                Text = ""
+            };
+        (TokenKind kind, Func<ArraySegment<char>, int>)[] matchers = LexMatchers.Matchers();
+        (TokenKind kind, int matchLen)? match = null;
+        foreach ((TokenKind kind, Func<ArraySegment<char>, int>) matcher in matchers)
         {
-            if (Code.Count == 0)
-                return new Token()
-                {
-                    Kind = TokenKind.Eof,
-                    Text = ""
-                };
-            (TokenKind kind, Func<ArraySegment<char>, int>)[] matchers = LexMatchers.Matchers();
-            (TokenKind kind, int matchLen)? match = null;
-            foreach ((TokenKind kind, Func<ArraySegment<char>, int>) matcher in matchers)
-            {
-                match = ScannerUtils.Match(Code, matchers);
-                if (match != null) break;
-            }
-
-            if (!match.HasValue)
-            {
-                ReportError(null, Code);
-            }
-
-            return BuildToken(Code, match!.Value);
+            match = ScannerUtils.Match(Code, matchers);
+            if (match != null) break;
         }
 
-        public Token Advance()
+        if (!match.HasValue)
         {
-            var token = Peek();
-            Code = Code.Slice(token.Text.Length);
+            ReportError(null, Code);
+        }
+
+        return BuildToken(Code, match!.Value);
+    }
+
+    public Token CurrentToken
+    {
+        get
+        {
+            Token token = Peek();
+            while (IsSpacesToken(token))
+            {
+                Advance();
+                token = Peek();
+            }
+
             return token;
         }
+    }
 
-        private static Token BuildToken(ArraySegment<char> code, (TokenKind kind, int matchLen) match)
+
+    public Token Advance()
+    {
+        Token token = Peek();
+        Code = Code.Slice(token.Text.Length);
+        return token;
+    }
+
+    public bool IsSpacesToken(Token token) => SpaceTokenKinds.Contains(token.Kind);
+
+    private static Token BuildToken(ArraySegment<char> code, (TokenKind kind, int matchLen) match)
+    {
+        Span<char> spanToken = code.AsSpan().Slice(0, match.matchLen);
+        return new Token
         {
-            var spanToken = code.AsSpan().Slice(0, match.matchLen);
-            return new Token
-            {
-                Kind = match.kind,
-                Text = spanToken.ToString()
-            };
+            Kind = match.kind,
+            Text = spanToken.ToString()
+        };
+    }
+
+    private static void ReportError((TokenKind kind, int matchLen)? match, ArraySegment<char> text)
+    {
+        if (match != null)
+        {
+            return;
         }
 
-        private static void ReportError((TokenKind kind, int matchLen)? match, ArraySegment<char> text)
+        Span<char> startError = text.AsSpan();
+        if (startError.Length > 100)
         {
-            if (match != null)
+            startError = startError.Slice(0, 100);
+        }
+
+        string errorText = startError.ToString();
+        throw new InvalidDataException($"Invalid start text: '{errorText}'");
+    }
+
+    private static readonly TokenKind[] SpaceTokenKinds =
+    [
+        TokenKind.Comment, TokenKind.Space, TokenKind.Eoln
+    ];
+
+    public Token[] ReadUntil(string tokenText)
+    {
+        List<Token> resultList = new List<Token>();
+        do
+        {
+            Token token = Advance();
+            if (IsSpacesToken(token))
             {
-                return;
+                continue;
             }
 
-            var startError = text.AsSpan();
-            if (startError.Length > 100)
+            resultList.Add(token);
+            if (token.Text == tokenText)
             {
-                startError = startError.Slice(0, 100);
+                break;
             }
+        } while (true);
 
-            var errorText = startError.ToString();
-            throw new InvalidDataException($"Invalid start text: '{errorText}'");
-        }
-
-        private readonly TokenKind[] _spaceTokenKinds = new[] { TokenKind.Comment, TokenKind.Space };
-
-        public Token[] Simplify(Token[] tokens)
-        {
-            return tokens.Where(t => !_spaceTokenKinds.Contains(t.Kind)).ToArray();
-        }
+        return resultList.ToArray();
     }
 }

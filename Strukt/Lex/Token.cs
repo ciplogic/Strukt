@@ -1,13 +1,12 @@
-﻿namespace Strukt.Lex
-{
-    public struct Token
-    {
-        public TokenKind Kind;
-        public override string ToString()
-        {
-            return $"{Text} -> {Kind}";
-        }
+﻿namespace Strukt.Lex;
 
-        public string Text;
+public struct Token
+{
+    public TokenKind Kind;
+    public override string ToString()
+    {
+        return $"{Text} -> {Kind}";
     }
+
+    public string Text;
 }
